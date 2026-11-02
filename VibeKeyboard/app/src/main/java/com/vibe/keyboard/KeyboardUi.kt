@@ -99,7 +99,36 @@ fun hslColor(h: Float, s: Float, l: Float): Color {
     return Color(r + m, g + m, b + m)
 }
 
+@Composable
+fun isDarkTheme(): Boolean = when (Settings.themeMode) {
+    1 -> false
+    2 -> true
+    else -> isSystemInDarkTheme()
+}
+
+private fun whiteScheme(dark: Boolean): ColorScheme {
+    fun g(l: Float) = hslColor(0f, 0f, l)
+    return if (dark) darkColorScheme(
+        primary = g(.95f), onPrimary = g(.1f),
+        primaryContainer = g(.35f), onPrimaryContainer = g(.95f),
+        secondaryContainer = g(.27f), onSecondaryContainer = g(.92f),
+        tertiaryContainer = g(.31f), onTertiaryContainer = g(.92f),
+        background = g(.07f), surface = g(.07f),
+        onSurface = g(.93f), onSurfaceVariant = g(.75f),
+        surfaceContainer = g(.10f), surfaceContainerHigh = g(.15f), surfaceContainerHighest = g(.21f),
+    ) else lightColorScheme(
+        primary = g(.15f), onPrimary = Color.White,
+        primaryContainer = g(.85f), onPrimaryContainer = g(.1f),
+        secondaryContainer = g(.89f), onSecondaryContainer = g(.12f),
+        tertiaryContainer = g(.93f), onTertiaryContainer = g(.12f),
+        background = Color.White, surface = Color.White,
+        onSurface = g(.08f), onSurfaceVariant = g(.35f),
+        surfaceContainer = Color.White, surfaceContainerHigh = g(.96f), surfaceContainerHighest = g(.93f),
+    )
+}
+
 fun customScheme(hue: Float, dark: Boolean): ColorScheme {
+    if (hue < 0f) return whiteScheme(dark)
     fun c(dh: Float, s: Float, l: Float) = hslColor(hue + dh, s, l)
     return if (dark) darkColorScheme(
         primary = c(0f, .85f, .78f), onPrimary = c(0f, .9f, .15f),
@@ -124,7 +153,7 @@ fun customScheme(hue: Float, dark: Boolean): ColorScheme {
 
 @Composable
 fun VibeTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+    val dark = isDarkTheme()
     val ctx = LocalContext.current
     val useDynamic = Settings.colorMode == ColorMode.DYNAMIC &&
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -395,7 +424,7 @@ fun KeyboardUi(state: KeyboardState, actions: KeyboardActions, applyNavInsets: B
                 if (state.layer == Layer.EMOJI) {
                     EmojiPanel(actions)
                 } else if (state.layer == Layer.CLIPBOARD) {
-                    ClipboardPanel(actions)
+                    ToolsPanel(actions)
                 } else {
                     rows.forEachIndexed { i, row ->
                         val side = (maxLen - row.length) / 2f
@@ -560,6 +589,7 @@ fun KeyBox(
     pressed: Boolean,
     fontSize: Float? = null,
     onPositioned: ((LayoutCoordinates) -> Unit)? = null,
+    height: Float? = null,
 ) {
     val effect = Settings.effect
     val morph = effect == PressEffect.MORPH || effect == PressEffect.COMBO
@@ -567,7 +597,7 @@ fun KeyBox(
     val scaling = effect == PressEffect.SQUISH || effect == PressEffect.BOUNCE ||
         effect == PressEffect.COMBO
     val glass = Settings.glass
-    val dark = isSystemInDarkTheme()
+    val dark = isDarkTheme()
 
     val base = Settings.cornerRadius
     val radius by animateDpAsState(
@@ -619,7 +649,7 @@ fun KeyBox(
 
     Box(
         modifier = modifier
-            .height(Settings.keyHeight.dp)
+            .height((height ?: Settings.keyHeight).dp)
             .then(if (onPositioned != null) Modifier.onGloballyPositioned(onPositioned) else Modifier)
             .graphicsLayer { scaleX = scale; scaleY = scale }
             .clip(shape)
@@ -643,6 +673,7 @@ fun RowScope.Key(
     content: Color,
     fontSize: Float? = null,
     repeat: Boolean = false,
+    height: Float? = null,
     onClick: () -> Unit,
 ) {
     val view = LocalView.current
@@ -673,7 +704,7 @@ fun RowScope.Key(
                 )
             },
         label = label, container = container, content = content,
-        pressed = pressed, fontSize = fontSize,
+        pressed = pressed, fontSize = fontSize, height = height,
     )
 }
 

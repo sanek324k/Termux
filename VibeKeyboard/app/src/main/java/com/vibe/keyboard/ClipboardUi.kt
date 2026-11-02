@@ -53,7 +53,7 @@ fun SuggestionBar(state: KeyboardState, actions: KeyboardActions) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         BarIcon("😊") { actions.toggleEmoji() }
-        if (Settings.clipboard) BarIcon("📋") { actions.toggleClipboard() }
+        BarIcon("🧰") { actions.toggleClipboard() }
 
         val sug = state.suggestions
         for (i in 0 until 3) {
@@ -148,7 +148,7 @@ private fun ClipCard(item: ClipItem, actions: KeyboardActions) {
 }
 
 @Composable
-fun ClipboardPanel(actions: KeyboardActions) {
+fun ClipboardBody(actions: KeyboardActions) {
     val cs = MaterialTheme.colorScheme
     val clips = ClipStore.items
     val gridHeight = (Settings.keyHeight * 3 + Settings.gap * 2).dp
