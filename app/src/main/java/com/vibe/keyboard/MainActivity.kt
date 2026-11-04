@@ -134,7 +134,10 @@ private fun SettingsScreen(onEnable: () -> Unit, onPick: () -> Unit) {
     val shotLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         Settings.screenshots = granted
         Settings.save()
-        if (!granted) Toast.makeText(ctx, "Нужен доступ к фото (выбери «Разрешить все»)", Toast.LENGTH_LONG).show()
+        if (!granted) {
+            Toast.makeText(ctx, "Включи «Фото и видео» → «Разрешить все» в настройках приложения", Toast.LENGTH_LONG).show()
+            ctx.startActivity(Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:" + ctx.packageName)))
+        }
     }
     var typed by remember { mutableStateOf("") }
     val kb = remember { KeyboardState() }
