@@ -48,6 +48,9 @@ object Settings {
     var swipeTyping by mutableStateOf(true)
     var glass by mutableStateOf(false)
     var themeMode by mutableStateOf(0)
+    var amoled by mutableStateOf(true)
+    var accentShape by mutableStateOf(AccentShape.COOKIE)
+    var shapedKeys by mutableStateOf(true)
     var translatorEnabled by mutableStateOf(true)
     var glassAlpha by mutableStateOf(0.38f)
     var windowBlur by mutableStateOf(false)
@@ -179,6 +182,10 @@ object Settings {
         swipeTyping = p.getBoolean("swipeTyping", swipeTyping)
         glass = p.getBoolean("glass", glass)
         themeMode = p.getInt("themeMode", themeMode)
+        amoled = p.getBoolean("amoled", amoled)
+        shapedKeys = p.getBoolean("shapedKeys", shapedKeys)
+        accentShape = runCatching { AccentShape.valueOf(p.getString("accentShape", "") ?: "") }
+            .getOrDefault(AccentShape.COOKIE)
         translatorEnabled = p.getBoolean("translatorEnabled", translatorEnabled)
         glassAlpha = p.getFloat("glassAlpha", glassAlpha)
         windowBlur = p.getBoolean("windowBlur", windowBlur)
@@ -209,6 +216,9 @@ object Settings {
             ?.putBoolean("swipeTyping", swipeTyping)
             ?.putBoolean("glass", glass)
             ?.putInt("themeMode", themeMode)
+            ?.putBoolean("amoled", amoled)
+            ?.putBoolean("shapedKeys", shapedKeys)
+            ?.putString("accentShape", accentShape.name)
             ?.putBoolean("translatorEnabled", translatorEnabled)
             ?.putFloat("glassAlpha", glassAlpha)
             ?.putBoolean("windowBlur", windowBlur)
@@ -225,7 +235,7 @@ object Settings {
     fun reset() {
         keyHeight = 62f; gap = 6f; hGap = 4f; sidePad = 3f; bottomPad = 10f; cornerRadius = 26f; fontSize = 22f
         effect = PressEffect.COMBO; haptics = true
-        colorMode = ColorMode.DYNAMIC; hue = 220f; suggestions = true; clipboard = true; swipeTyping = true; fontKey = "default"; glass = false; themeMode = 0; translatorEnabled = true; glassAlpha = 0.38f; bgDim = 0.25f; bgBlur = 0f; windowBlur = false
+        colorMode = ColorMode.DYNAMIC; hue = 220f; suggestions = true; clipboard = true; swipeTyping = true; fontKey = "default"; glass = false; themeMode = 0; amoled = true; accentShape = AccentShape.COOKIE; shapedKeys = true; translatorEnabled = true; glassAlpha = 0.38f; bgDim = 0.25f; bgBlur = 0f; windowBlur = false
         save()
     }
 }

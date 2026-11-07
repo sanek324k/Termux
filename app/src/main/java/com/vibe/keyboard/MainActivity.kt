@@ -235,6 +235,17 @@ private fun SettingsScreen(onEnable: () -> Unit, onPick: () -> Unit) {
             Switch(checked = Settings.swipeTyping, onCheckedChange = { Settings.swipeTyping = it; Settings.save() })
         }
 
+        SectionTitle("Форма кнопок")
+        ShapePicker()
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Форма на клавишах (Enter, язык, эмодзи)", color = cs.onSurface, modifier = Modifier.weight(1f))
+            Switch(checked = Settings.shapedKeys, onCheckedChange = { Settings.shapedKeys = it; Settings.save() })
+        }
+
         SectionTitle("Оформление")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(selected = !Settings.glass, onClick = { Settings.glass = false; Settings.save() }, label = { Text("Material You") })
@@ -369,9 +380,9 @@ private fun SettingsScreen(onEnable: () -> Unit, onPick: () -> Unit) {
                 Box(
                     Modifier
                         .size(38.dp)
-                        .clip(CircleShape)
+                        .clip(AccentShapeImpl(Settings.accentShape))
                         .background(if (h < 0f) Color.White else hslColor(h, .8f, .55f))
-                        .border(if (selected) 3.dp else 1.dp, if (selected) cs.onSurface else cs.outlineVariant, CircleShape)
+                        .border(if (selected) 3.dp else 1.dp, if (selected) cs.onSurface else cs.outlineVariant, AccentShapeImpl(Settings.accentShape))
                         .clickable {
                             Settings.hue = h
                             if (h < 0f) Settings.themeMode = 1
@@ -389,6 +400,14 @@ private fun SettingsScreen(onEnable: () -> Unit, onPick: () -> Unit) {
                     label = { Text(label) },
                 )
             }
+        }
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("AMOLED: глубокий чёрный (в тёмной теме)", color = cs.onSurface, modifier = Modifier.weight(1f))
+            Switch(checked = Settings.amoled, onCheckedChange = { Settings.amoled = it; Settings.save() })
         }
         if (Settings.colorMode == ColorMode.CUSTOM && Settings.hue >= 0f) {
             SliderRow("Оттенок", Settings.hue, 0f..360f, "°") { Settings.hue = it }
