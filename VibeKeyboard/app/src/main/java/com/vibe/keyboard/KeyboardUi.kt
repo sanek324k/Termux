@@ -54,6 +54,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -151,17 +152,34 @@ fun customScheme(hue: Float, dark: Boolean): ColorScheme {
     )
 }
 
+/** AMOLED: чистый чёрный фон, клавиши тёмные с лёгким оттенком акцента. */
+private fun amoledScheme(s: ColorScheme): ColorScheme {
+    fun d(c: Color, f: Float) = lerp(c, Color.Black, f)
+    return s.copy(
+        background = Color.Black, surface = Color.Black,
+        surfaceContainer = Color.Black,
+        surfaceContainerLow = Color.Black, surfaceContainerLowest = Color.Black,
+        surfaceContainerHigh = d(s.surfaceContainerHigh, 0.65f),
+        surfaceContainerHighest = d(s.surfaceContainerHighest, 0.55f),
+        surfaceVariant = d(s.surfaceVariant, 0.6f),
+        primaryContainer = d(s.primaryContainer, 0.4f),
+        secondaryContainer = d(s.secondaryContainer, 0.45f),
+        tertiaryContainer = d(s.tertiaryContainer, 0.45f),
+    )
+}
+
 @Composable
 fun VibeTheme(content: @Composable () -> Unit) {
     val dark = isDarkTheme()
     val ctx = LocalContext.current
     val useDynamic = Settings.colorMode == ColorMode.DYNAMIC &&
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    val scheme: ColorScheme = if (useDynamic) {
+    val base: ColorScheme = if (useDynamic) {
         if (dark) dynamicDarkColorScheme(ctx) else dynamicLightColorScheme(ctx)
     } else {
         customScheme(Settings.hue, dark)
     }
+    val scheme = if (dark && Settings.amoled) amoledScheme(base) else base
     MaterialTheme(colorScheme = scheme, content = content)
 }
 
@@ -370,6 +388,7 @@ fun KeyboardUi(state: KeyboardState, actions: KeyboardActions, applyNavInsets: B
         val symbols = state.layer == Layer.SYMBOLS
         val rows = if (symbols) (if (state.symbolPage == 1) SYMBOL_ROWS_2 else SYMBOL_ROWS) else state.lang.rows
         val maxLen = rows[0].length
+        val keyShape: Shape? = if (Settings.shapedKeys) AccentShapeImpl(Settings.accentShape) else null
 
         val touch = remember { TouchUi() }
         val view = LocalView.current
@@ -485,7 +504,7 @@ fun KeyboardUi(state: KeyboardState, actions: KeyboardActions, applyNavInsets: B
 
                     Row(horizontalArrangement = Arrangement.spacedBy(hGap)) {
                         Key(
-                            label = if (symbols) "ABC" else "?123", weight = 1.5f,
+                            label = if (symbols) "ABC" else "?123", weight = 1.4f,
                             container = cs.secondaryContainer, content = cs.onSecondaryContainer,
                             fontSize = 16f,
                         ) { state.symbolPage = 0; actions.toggleLayer() }
@@ -494,12 +513,17 @@ fun KeyboardUi(state: KeyboardState, actions: KeyboardActions, applyNavInsets: B
                             container = cs.surfaceContainerHighest, content = cs.onSurface,
                         ) { actions.type(if (symbols && state.symbolPage == 1) "<" else ",") }
                         Key(
-                            label = state.lang.next().label, weight = 1.2f,
+                            label = "😊", weight = 1.1f,
+                            container = cs.secondaryContainer, content = cs.onSecondaryContainer,
+                            fontSize = 20f, accent = keyShape,
+                        ) { actions.toggleEmoji() }
+                        Key(
+                            label = state.lang.next().label, weight = 1.1f,
                             container = cs.tertiaryContainer, content = cs.onTertiaryContainer,
-                            fontSize = 16f,
+                            fontSize = 16f, accent = keyShape,
                         ) { actions.switchLang() }
                         Key(
-                            label = state.lang.label, weight = 4f,
+                            label = state.lang.label, weight = 3.2f,
                             container = cs.surfaceContainerHighest, content = cs.onSurfaceVariant,
                             fontSize = 14f,
                         ) { actions.type(" ") }
@@ -508,8 +532,9 @@ fun KeyboardUi(state: KeyboardState, actions: KeyboardActions, applyNavInsets: B
                             container = cs.surfaceContainerHighest, content = cs.onSurface,
                         ) { actions.type(if (symbols && state.symbolPage == 1) ">" else ".") }
                         Key(
-                            label = "↵", weight = 1.5f,
+                            label = "↵", weight = 1.4f,
                             container = cs.primary, content = cs.onPrimary,
+                            accent = keyShape,
                         ) { actions.enter() }
                     }
                 }
@@ -590,6 +615,7 @@ fun KeyBox(
     fontSize: Float? = null,
     onPositioned: ((LayoutCoordinates) -> Unit)? = null,
     height: Float? = null,
+    accent: Shape? = null,
 ) {
     val effect = Settings.effect
     val morph = effect == PressEffect.MORPH || effect == PressEffect.COMBO
@@ -627,7 +653,7 @@ fun KeyBox(
         animationSpec = tween(80),
         label = "boost",
     )
-    val shape = RoundedCornerShape(radius)
+    val shape: Shape = accent ?: RoundedCornerShape(radius)
 
     val look = if (glass) {
         val a = Settings.glassAlpha
@@ -674,6 +700,7 @@ fun RowScope.Key(
     fontSize: Float? = null,
     repeat: Boolean = false,
     height: Float? = null,
+    accent: Shape? = null,
     onClick: () -> Unit,
 ) {
     val view = LocalView.current
@@ -704,7 +731,7 @@ fun RowScope.Key(
                 )
             },
         label = label, container = container, content = content,
-        pressed = pressed, fontSize = fontSize, height = height,
+        pressed = pressed, fontSize = fontSize, height = height, accent = accent,
     )
 }
 

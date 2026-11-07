@@ -134,7 +134,10 @@ private fun SettingsScreen(onEnable: () -> Unit, onPick: () -> Unit) {
     val shotLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         Settings.screenshots = granted
         Settings.save()
-        if (!granted) Toast.makeText(ctx, "Нужен доступ к фото (выбери «Разрешить все»)", Toast.LENGTH_LONG).show()
+        if (!granted) {
+            Toast.makeText(ctx, "Включи «Фото и видео» → «Разрешить все» в настройках приложения", Toast.LENGTH_LONG).show()
+            ctx.startActivity(Intent(AndroidSettings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:" + ctx.packageName)))
+        }
     }
     var typed by remember { mutableStateOf("") }
     val kb = remember { KeyboardState() }
@@ -232,6 +235,17 @@ private fun SettingsScreen(onEnable: () -> Unit, onPick: () -> Unit) {
             Switch(checked = Settings.swipeTyping, onCheckedChange = { Settings.swipeTyping = it; Settings.save() })
         }
 
+        SectionTitle("Форма кнопок")
+        ShapePicker()
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Форма на клавишах (Enter, язык, эмодзи)", color = cs.onSurface, modifier = Modifier.weight(1f))
+            Switch(checked = Settings.shapedKeys, onCheckedChange = { Settings.shapedKeys = it; Settings.save() })
+        }
+
         SectionTitle("Оформление")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             FilterChip(selected = !Settings.glass, onClick = { Settings.glass = false; Settings.save() }, label = { Text("Material You") })
@@ -275,6 +289,14 @@ private fun SettingsScreen(onEnable: () -> Unit, onPick: () -> Unit) {
                     }
                 },
             )
+        }
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Переводчик (текст уходит на сервер перевода только по кнопке)", color = cs.onSurface, modifier = Modifier.weight(1f))
+            Switch(checked = Settings.translatorEnabled, onCheckedChange = { Settings.translatorEnabled = it; Settings.save() })
         }
         FilledTonalButton(onClick = { dictPicker.launch(arrayOf("*/*")) }, modifier = Modifier.fillMaxWidth()) {
             Text("Загрузить словарь для свайпа (.txt)")
@@ -353,23 +375,41 @@ private fun SettingsScreen(onEnable: () -> Unit, onPick: () -> Unit) {
             }
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            listOf(0f, 25f, 50f, 140f, 175f, 210f, 260f, 320f).forEach { h ->
+            listOf(-1f, 0f, 25f, 50f, 140f, 175f, 210f, 260f, 320f).forEach { h ->
                 val selected = Settings.colorMode == ColorMode.CUSTOM && Settings.hue == h
                 Box(
                     Modifier
                         .size(38.dp)
-                        .clip(CircleShape)
-                        .background(hslColor(h, .8f, .55f))
-                        .border(3.dp, if (selected) cs.onSurface else Color.Transparent, CircleShape)
+                        .clip(AccentShapeImpl(Settings.accentShape))
+                        .background(if (h < 0f) Color.White else hslColor(h, .8f, .55f))
+                        .border(if (selected) 3.dp else 1.dp, if (selected) cs.onSurface else cs.outlineVariant, AccentShapeImpl(Settings.accentShape))
                         .clickable {
                             Settings.hue = h
+                            if (h < 0f) Settings.themeMode = 1
                             Settings.colorMode = ColorMode.CUSTOM
                             Settings.save()
                         },
                 )
             }
         }
-        if (Settings.colorMode == ColorMode.CUSTOM) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(0 to "Тема: авто", 1 to "Светлая", 2 to "Тёмная").forEach { (v, label) ->
+                FilterChip(
+                    selected = Settings.themeMode == v,
+                    onClick = { Settings.themeMode = v; Settings.save() },
+                    label = { Text(label) },
+                )
+            }
+        }
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("AMOLED: глубокий чёрный (в тёмной теме)", color = cs.onSurface, modifier = Modifier.weight(1f))
+            Switch(checked = Settings.amoled, onCheckedChange = { Settings.amoled = it; Settings.save() })
+        }
+        if (Settings.colorMode == ColorMode.CUSTOM && Settings.hue >= 0f) {
             SliderRow("Оттенок", Settings.hue, 0f..360f, "°") { Settings.hue = it }
         }
 

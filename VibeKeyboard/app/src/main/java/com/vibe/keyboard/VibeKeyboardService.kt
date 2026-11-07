@@ -57,6 +57,8 @@ class VibeKeyboardService :
         super.onCreate()
         Settings.init(this)
         watcher = ScreenshotWatcher(this).also { it.start() }
+        FieldBridge.read = { readFieldText() }
+        FieldBridge.replace = { replaceFieldText(it) }
         (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).addPrimaryClipChangedListener(clipListener)
         savedStateController.performAttach()
         savedStateController.performRestore(null)
@@ -118,6 +120,8 @@ class VibeKeyboardService :
 
     override fun onDestroy() {
         watcher?.stop()
+        FieldBridge.read = { "" }
+        FieldBridge.replace = { }
         (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager).removePrimaryClipChangedListener(clipListener)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
         store.clear()
@@ -125,6 +129,31 @@ class VibeKeyboardService :
     }
 
     // ---- helpers ----
+
+    private fun readFieldText(): String {
+        if (state.sensitiveField) return ""
+        val ic = currentInputConnection ?: return ""
+        val sel = ic.getSelectedText(0)
+        if (!sel.isNullOrEmpty()) return sel.toString()
+        val before = ic.getTextBeforeCursor(1500, 0) ?: ""
+        val after = ic.getTextAfterCursor(1500, 0) ?: ""
+        return before.toString() + after.toString()
+    }
+
+    private fun replaceFieldText(newText: String) {
+        val ic = currentInputConnection ?: return
+        val sel = ic.getSelectedText(0)
+        ic.beginBatchEdit()
+        if (sel.isNullOrEmpty()) {
+            val b = ic.getTextBeforeCursor(1500, 0)?.length ?: 0
+            val a = ic.getTextAfterCursor(1500, 0)?.length ?: 0
+            ic.deleteSurroundingText(b, a)
+        }
+        ic.commitText(newText, 1)
+        ic.endBatchEdit()
+        autoCap()
+        refreshSuggestions()
+    }
 
     private fun applyWindowStyle() {
         try {

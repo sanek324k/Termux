@@ -52,8 +52,7 @@ fun SuggestionBar(state: KeyboardState, actions: KeyboardActions) {
         Modifier.fillMaxWidth().height(42.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        BarIcon("😊") { actions.toggleEmoji() }
-        BarIcon("🧰") { actions.toggleClipboard() }
+        ToolsButton { actions.toggleClipboard() }
 
         val sug = state.suggestions
         for (i in 0 until 3) {
