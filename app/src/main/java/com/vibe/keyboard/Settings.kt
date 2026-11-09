@@ -49,6 +49,7 @@ object Settings {
     var glass by mutableStateOf(false)
     var themeMode by mutableStateOf(0)
     var amoled by mutableStateOf(true)
+    var oneUi by mutableStateOf(false)
     var accentShape by mutableStateOf(AccentShape.COOKIE)
     var shapedKeys by mutableStateOf(true)
     var translatorEnabled by mutableStateOf(true)
@@ -183,6 +184,7 @@ object Settings {
         glass = p.getBoolean("glass", glass)
         themeMode = p.getInt("themeMode", themeMode)
         amoled = p.getBoolean("amoled", amoled)
+        oneUi = p.getBoolean("oneUi", oneUi)
         shapedKeys = p.getBoolean("shapedKeys", shapedKeys)
         accentShape = runCatching { AccentShape.valueOf(p.getString("accentShape", "") ?: "") }
             .getOrDefault(AccentShape.COOKIE)
@@ -198,6 +200,23 @@ object Settings {
             .getOrDefault(PressEffect.COMBO)
         colorMode = runCatching { ColorMode.valueOf(p.getString("colorMode", "") ?: "") }
             .getOrDefault(ColorMode.DYNAMIC)
+    }
+
+    /** 0 = Material You, 1 = Liquid Glass, 2 = One UI. Вход в One UI и выход из него меняют геометрию клавиш. */
+    fun applyStyle(style: Int) {
+        val wasOneUi = oneUi
+        glass = style == 1
+        oneUi = style == 2
+        if (style == 2 && !wasOneUi) {
+            keyHeight = 54f; cornerRadius = 9f; gap = 5f; hGap = 4f; sidePad = 3f
+            shapedKeys = false
+            effect = PressEffect.GLOW
+        } else if (style != 2 && wasOneUi) {
+            keyHeight = 62f; cornerRadius = 26f; gap = 6f; hGap = 4f; sidePad = 3f
+            shapedKeys = true
+            effect = PressEffect.COMBO
+        }
+        save()
     }
 
     fun save() {
@@ -217,6 +236,7 @@ object Settings {
             ?.putBoolean("glass", glass)
             ?.putInt("themeMode", themeMode)
             ?.putBoolean("amoled", amoled)
+            ?.putBoolean("oneUi", oneUi)
             ?.putBoolean("shapedKeys", shapedKeys)
             ?.putString("accentShape", accentShape.name)
             ?.putBoolean("translatorEnabled", translatorEnabled)
@@ -235,7 +255,7 @@ object Settings {
     fun reset() {
         keyHeight = 62f; gap = 6f; hGap = 4f; sidePad = 3f; bottomPad = 10f; cornerRadius = 26f; fontSize = 22f
         effect = PressEffect.COMBO; haptics = true
-        colorMode = ColorMode.DYNAMIC; hue = 220f; suggestions = true; clipboard = true; swipeTyping = true; fontKey = "default"; glass = false; themeMode = 0; amoled = true; accentShape = AccentShape.COOKIE; shapedKeys = true; translatorEnabled = true; glassAlpha = 0.38f; bgDim = 0.25f; bgBlur = 0f; windowBlur = false
+        colorMode = ColorMode.DYNAMIC; hue = 220f; suggestions = true; clipboard = true; swipeTyping = true; fontKey = "default"; glass = false; oneUi = false; themeMode = 0; amoled = true; accentShape = AccentShape.COOKIE; shapedKeys = true; translatorEnabled = true; glassAlpha = 0.38f; bgDim = 0.25f; bgBlur = 0f; windowBlur = false
         save()
     }
 }

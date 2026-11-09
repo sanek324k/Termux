@@ -58,13 +58,13 @@ class AccentShapeImpl(private val kind: AccentShape) : Shape {
             AccentShape.CIRCLE -> path.addOval(box)
             AccentShape.SQUARE -> path.addRoundRect(RoundRect(box, CornerRadius(s * 0.06f)))
             AccentShape.ROUNDED -> path.addRoundRect(RoundRect(box, CornerRadius(s * 0.28f)))
-            AccentShape.COOKIE -> lobes(path, cx, cy, s / 2f, 12, 0.09f, 0.5f)
-            AccentShape.SUN -> lobes(path, cx, cy, s / 2f, 8, 0.20f, 2.2f)
+            AccentShape.COOKIE -> lobes(path, cx, cy, s / 2f, 9, 0.10f, 0.5f)
+            AccentShape.SUN -> lobes(path, cx, cy, s / 2f, 6, 0.12f, 0.5f)
         }
         return Outline.Generic(path)
     }
 
-    /** Фигура с n лепестками: k < 1 даёт округлые выступы и острые впадины (печенька), k > 1 даёт острые лучи (солнце). */
+    /** Фигура с n округлыми выступами и острыми «ямками» между ними: печенька (9) и солнце (6, ямок меньше). */
     private fun lobes(path: Path, cx: Float, cy: Float, rMax: Float, n: Int, depth: Float, k: Float) {
         val rMin = rMax * (1f - depth)
         val steps = 360

@@ -152,6 +152,30 @@ fun customScheme(hue: Float, dark: Boolean): ColorScheme {
     )
 }
 
+/** Стиль One UI: спокойные серые поверхности, белые/тёмно-серые клавиши, синий акцент. */
+private fun oneUiScheme(dark: Boolean, accent: Color): ColorScheme {
+    val soft = lerp(accent, if (dark) Color.Black else Color.White, 0.78f)
+    return if (dark) darkColorScheme(
+        primary = accent, onPrimary = Color.White,
+        primaryContainer = soft, onPrimaryContainer = Color.White,
+        secondaryContainer = Color(0xFF454548), onSecondaryContainer = Color(0xFFEDEDED),
+        tertiaryContainer = Color(0xFF454548), onTertiaryContainer = Color(0xFFEDEDED),
+        background = Color(0xFF181818), surface = Color(0xFF181818),
+        onSurface = Color(0xFFEDEDED), onSurfaceVariant = Color(0xFFA9A9AE),
+        surfaceContainer = Color(0xFF1E1E20), surfaceContainerHigh = Color(0xFF2A2A2C),
+        surfaceContainerHighest = Color(0xFF343437), outlineVariant = Color(0xFF3A3A3C),
+    ) else lightColorScheme(
+        primary = accent, onPrimary = Color.White,
+        primaryContainer = soft, onPrimaryContainer = lerp(accent, Color.Black, 0.35f),
+        secondaryContainer = Color(0xFFCDD0D6), onSecondaryContainer = Color(0xFF1A1A1A),
+        tertiaryContainer = Color(0xFFCDD0D6), onTertiaryContainer = Color(0xFF1A1A1A),
+        background = Color(0xFFF2F3F5), surface = Color(0xFFF2F3F5),
+        onSurface = Color(0xFF1A1A1A), onSurfaceVariant = Color(0xFF6B6B70),
+        surfaceContainer = Color(0xFFE4E6EA), surfaceContainerHigh = Color(0xFFF8F8FA),
+        surfaceContainerHighest = Color.White, outlineVariant = Color(0xFFD0D2D8),
+    )
+}
+
 /** AMOLED: чистый чёрный фон, клавиши тёмные с лёгким оттенком акцента. */
 private fun amoledScheme(s: ColorScheme): ColorScheme {
     fun d(c: Color, f: Float) = lerp(c, Color.Black, f)
@@ -179,7 +203,12 @@ fun VibeTheme(content: @Composable () -> Unit) {
     } else {
         customScheme(Settings.hue, dark)
     }
-    val scheme = if (dark && Settings.amoled) amoledScheme(base) else base
+    val styled = if (Settings.oneUi) {
+        oneUiScheme(dark, if (Settings.colorMode == ColorMode.CUSTOM) base.primary else Color(0xFF3E91FF))
+    } else {
+        base
+    }
+    val scheme = if (dark && Settings.amoled) amoledScheme(styled) else styled
     MaterialTheme(colorScheme = scheme, content = content)
 }
 
