@@ -17,11 +17,14 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v4
+    - name: Generate Gradle Wrapper
+      run: cd VibeKeyboard && gradle wrapper
 
-    - name: Build debug APK with Info Logs
-      run: cd VibeKeyboard && gradle assembleDebug --info
+    - name: Grant execute permission for gradlew
+      run: cd VibeKeyboard && chmod +x gradlew
+
+    - name: Build debug APK
+      run: cd VibeKeyboard && ./gradlew assembleDebug --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
