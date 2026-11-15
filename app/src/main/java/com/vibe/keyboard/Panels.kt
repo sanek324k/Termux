@@ -1,114 +1,94 @@
 package com.vibe.keyboard
 
-import androidx.compose.foundation.background
+import android.content.Intent
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.widget.Toast
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.util.*
 
 @Composable
-fun EmojiPanel(actions: KeyboardActions) {
-    val cs = MaterialTheme.colorScheme
-    val gap = Settings.gap.dp
-    val cats = EmojiData.categories
-    var tab by remember { mutableStateOf(if (EmojiStore.recent.isEmpty()) 1 else 0) }
-    val list = if (tab == 0) EmojiStore.recent else cats[tab - 1].second
-    val gridHeight = (Settings.keyHeight * 3 + Settings.gap * 2).dp
+fun KeyboardToolbar(
+    onEmojiClick: () -> Unit,
+    onVoiceInput: (String) -> Unit
+) {
+    val context = LocalContext.current
+    var isListening by remember { mutableStateOf(false) }
 
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .height(gridHeight)
-            .clip(RoundedCornerShape(20.dp))
-            .background(glassify(cs.surfaceContainerHigh)),
-    ) {
-        if (list.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Здесь появятся недавние эмодзи", color = cs.onSurfaceVariant)
-            }
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(46.dp),
-                contentPadding = PaddingValues(6.dp),
-            ) {
-                items(list) { em ->
-                    Box(
-                        Modifier
-                            .height(46.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable { actions.emoji(em) },
-                        contentAlignment = Alignment.Center,
-                    ) { Text(em, fontSize = 26.sp) }
+    val speechRecognizer = remember {
+        SpeechRecognizer.createSpeechRecognizer(context).apply {
+            setRecognitionListener(object : RecognitionListener {
+                override fun onReadyForSpeech(params: android.os.Bundle?) { isListening = true }
+                override fun onBeginningOfSpeech() {}
+                override fun onRmsChanged(rmsdB: Float) {}
+                override fun onBufferReceived(buffer: ByteArray?) {}
+                override fun onEndOfSpeech() { isListening = false }
+                override fun onError(error: Int) { isListening = false }
+                override fun onResults(results: android.os.Bundle?) {
+                    isListening = false
+                    val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    if (!matches.isNullOrEmpty()) {
+                        onVoiceInput(matches[0])
+                    }
                 }
-            }
+                override fun onPartialResults(partialResults: android.os.Bundle?) {}
+                override fun onEvent(eventType: Int, params: android.os.Bundle?) {}
+            })
         }
     }
 
-    Row(horizontalArrangement = Arrangement.spacedBy(Settings.hGap.dp)) {
-        Key(
-            label = "ABC", weight = 1.5f,
-            container = cs.secondaryContainer, content = cs.onSecondaryContainer,
-            fontSize = 16f,
-        ) { actions.toggleLayer() }
-
-        Row(
-            Modifier
-                .weight(7f)
-                .height(Settings.keyHeight.dp)
-                .clip(RoundedCornerShape(Settings.cornerRadius.dp))
-                .background(glassify(cs.surfaceContainerHighest))
-                .horizontalScroll(rememberScrollState()),
-            verticalAlignment = Alignment.CenterVertically,
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(44.dp)
+            .padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clickable { onEmojiClick() },
+            contentAlignment = Alignment.Center
         ) {
-            val icons = listOf("🕘") + cats.map { it.first }
-            val s = (Settings.keyHeight - 12f).coerceAtLeast(32f).dp
-            icons.forEachIndexed { i, ic ->
-                Box(
-                    Modifier
-                        .padding(horizontal = 3.dp)
-                        .size(s)
-                        .clip(CircleShape)
-                        .background(if (i == tab) cs.primaryContainer else Color.Transparent)
-                        .clickable { tab = i },
-                    contentAlignment = Alignment.Center,
-                ) { Text(ic, fontSize = 20.sp) }
-            }
+            Text(text = "🤥", fontSize = 22.sp)
         }
 
-        Key(
-            label = "⌫", weight = 1.5f,
-            container = cs.secondaryContainer, content = cs.onSecondaryContainer,
-            repeat = true,
-        ) { actions.backspace() }
+        IconButton(
+            onClick = {
+                if (!isListening) {
+                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                        putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                    }
+                    try {
+                        speechRecognizer.startListening(intent)
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Голосовой ввод недоступен", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    speechRecognizer.stopListening()
+                    isListening = false
+                }
+            }
+        ) {
+            Icon(
+                imageVector = Icons.Default.Mic,
+                contentDescription = "Голосовой ввод",
+                tint = if (isListening) Color.Red else LocalContentColor.current
+            )
+        }
     }
 }
