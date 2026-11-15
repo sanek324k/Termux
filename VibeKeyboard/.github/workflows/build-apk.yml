@@ -17,21 +17,15 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Pure Manual Build with Gradle 8.7
+    - name: Build APK Directly
       run: |
         cd VibeKeyboard
-        echo "Качаем чистый Gradle 8.7..."
+        echo "Скачиваем Gradle 8.7..."
         wget -q https://services.gradle.org/distributions/gradle-8.7-bin.zip
         unzip -q gradle-8.7-bin.zip
         
-        # Добавляем скачанный gradle в системный PATH текущего шага
-        export PATH=$PWD/gradle-8.7/bin:$PATH
-        
-        echo "Проверяем версию gradle:"
-        gradle --version
-        
-        echo "Собираем APK..."
-        gradle assembleDebug --stacktrace
+        echo "Запускаем сборку..."
+        ./gradle-8.7/bin/gradle assembleDebug --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
