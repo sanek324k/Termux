@@ -17,14 +17,21 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Generate Gradle Wrapper
-      run: cd VibeKeyboard && gradle wrapper
+    - name: Install Gradle system-wide
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gradle
 
-    - name: Grant execute permission for gradlew
-      run: cd VibeKeyboard && chmod +x gradlew
+    - name: Generate Gradle Wrapper
+      run: |
+        cd VibeKeyboard
+        gradle wrapper --gradle-version 8.9
 
     - name: Build debug APK
-      run: cd VibeKeyboard && ./gradlew assembleDebug --stacktrace
+      run: |
+        cd VibeKeyboard
+        chmod +x gradlew
+        ./gradlew assembleDebug --stacktrace
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
